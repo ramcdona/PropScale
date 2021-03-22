@@ -189,6 +189,21 @@ class ScalableMap():
 
         output = {}
 
+        # The J will stay the same we just need to convert the CP from scaled to base
+        CPbase = Cp * (self.base_AF * self.base_NB)/(self.scaled_AF*self.scaled_NB)
+
+        # Calculate the efficiency in the base map using CPbase
+        Eta_CPbase, Beta_CPbase = self.__interpolate_base_map(Mach, J, CPbase)
+
+        # Now calculate the ideal performance for the given J, CPbase
+        Eta_i_CPbase, J_i_CPbase = Calc_Eta_i(J,CPbase,Eta_CPbase,self.base_NB)
+
+        # Calculate the propeller losses
+        Loss = Eta_i_CPbase - Eta_CPbase
+
+        # Calculate the Alpha corresponding to the CPbase (Alpha considered constant between base and scaled)
+        Alpha = Beta_CPbase - math.atan(J_i_CPbase/self.Rpitch/math.pi)*180./math.pi
+
         # Initial Eta guess
         EtaScaled_guess = 0.6
 
@@ -199,23 +214,8 @@ class ScalableMap():
             # First calculate the ideal performance for the given J, CP
             Eta_i, J_i = Calc_Eta_i(J, Cp, EtaScaled_guess, self.scaled_NB)
 
-            # The J will stay the same we just need to convert the CP from scaled to base
-            CPbase = Cp * (self.base_AF * self.base_NB)/(self.scaled_AF*self.scaled_NB)
-
-            # Calculate the efficiency in the base map using CPbase
-            Eta_CPbase, Beta_CPbase = self.__interpolate_base_map(Mach, J, CPbase)
-
-            # Now calculate the ideal performance for the given J, CPbase
-            Eta_i_CPbase, J_i_CPbase = Calc_Eta_i(J,CPbase,Eta_CPbase,self.base_NB)
-
-            # Calculate the propeller losses
-            Loss = Eta_i_CPbase - Eta_CPbase
-
             # Calculate the efficiency of the scaled propeller
             EtaScaled = Eta_i - Loss
-
-            # Calculate the Alpha corresponding to the CPbase (Alpha considered constant between base and scaled)
-            Alpha = Beta_CPbase - math.atan(J_i_CPbase/self.Rpitch/math.pi)*180./math.pi
 
             # Calculate the Beta of the scaled propeller
             Beta_scaled = Alpha + math.atan(J_i/self.Rpitch/math.pi)*180./math.pi
